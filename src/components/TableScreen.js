@@ -22,7 +22,7 @@ export default class TableScreen extends Component {
   render() {
     const values = generateTable(this.props.params).map(row => {
       return (
-        <Table.Row>
+        <Table.Row key={row.percent}>
           <Table.Cell>{row.percent}</Table.Cell>
           <Table.Cell>{row.caliperDist}</Table.Cell>
           <Table.Cell>{row.pinDist}</Table.Cell>

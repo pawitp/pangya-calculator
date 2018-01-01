@@ -6,7 +6,8 @@ import bindModel from '../lib/bindModel'
 export default class ConfigureScreen extends Component {
   state = {
     modalOpen: false,
-    saving: false
+    saving: false,
+    records: []
   }
 
   model = bindModel(this)
@@ -32,6 +33,20 @@ export default class ConfigureScreen extends Component {
       yardToCm: this.props.params.yardToCm,
       totalDist: this.props.params.totalDist
     })
+
+    // Fetch data
+    database
+      .ref('/records/' + auth.currentUser.uid + '/default')
+      .once('value')
+      .then(snapshot => {
+        var data = []
+        snapshot.forEach(childSnapshot => {
+          var value = childSnapshot.val()
+          value.key = childSnapshot.key
+          data.push(value)
+        })
+        this.setState({ records: data })
+      })
   }
 
   handleDiscard = () => this.setState({ modalOpen: false })
@@ -81,6 +96,21 @@ export default class ConfigureScreen extends Component {
   }
 
   render() {
+    const records = this.state.records.map(r => {
+      return (
+        <Table.Row key={r.key}>
+          <Table.Cell>{r.distance.toFixed(1)}</Table.Cell>
+          <Table.Cell>{r.height.toFixed(2)}</Table.Cell>
+          <Table.Cell>{r.wind}</Table.Cell>
+          <Table.Cell>{r.angle}</Table.Cell>
+          <Table.Cell>{r.actualCaliperDistance.toFixed(1)}</Table.Cell>
+          <Table.Cell>{r.actualHorizontalDistance.toFixed(2)}</Table.Cell>
+          <Table.Cell>{r.type}</Table.Cell>
+          <Table.Cell>TODO</Table.Cell>
+        </Table.Row>
+      )
+    })
+
     return (
       <Modal
         trigger={<Button onClick={this.handleOpen}>Configure</Button>}
@@ -311,6 +341,22 @@ export default class ConfigureScreen extends Component {
               </Table.Body>
             </Table>
           </Form>
+          <h3>Records</h3>
+          <Table celled striped>
+            <Table.Header>
+              <Table.Row>
+                <Table.HeaderCell>Distance</Table.HeaderCell>
+                <Table.HeaderCell>Height</Table.HeaderCell>
+                <Table.HeaderCell>Wind</Table.HeaderCell>
+                <Table.HeaderCell>Angle</Table.HeaderCell>
+                <Table.HeaderCell>Actual Caliper</Table.HeaderCell>
+                <Table.HeaderCell>Actual Horizontal</Table.HeaderCell>
+                <Table.HeaderCell>Type</Table.HeaderCell>
+                <Table.HeaderCell>Loss</Table.HeaderCell>
+              </Table.Row>
+            </Table.Header>
+            <Table.Body>{records}</Table.Body>
+          </Table>
         </Modal.Content>
         <Modal.Actions>
           <Button negative onClick={this.handleDiscard} inverted>

@@ -11,6 +11,7 @@ import ConfigureScreen from './ConfigureScreen'
 import TableScreen from './TableScreen'
 import calculateAll from '../lib/pangyaCalculator'
 import bindModel from '../lib/bindModel'
+import firebase, { database, auth } from '../lib/firebase'
 
 class CalculateScreen extends Component {
   state = {
@@ -18,27 +19,45 @@ class CalculateScreen extends Component {
     height: '',
     wind: '',
     angle: '',
-    result: null
+    result: null,
+    recordCaliperDistance: '',
+    recordHorizontalDistance: '',
+    recordType: '',
+    saving: 0 // 0 = not saved, 1 = saving, 2 = saved
   }
 
   model = bindModel(this)
 
-  handleChange = () => {
-    if (this.state.result != null) {
-      this.setState({ result: null })
+  handleChange = (key, value) => {
+    if (
+      key === 'distance' ||
+      key === 'height' ||
+      key === 'wind' ||
+      key === 'angle'
+    ) {
+      if (this.state.result != null) {
+        this.setState({ result: null })
+      }
     }
   }
 
   onCalculate = e => {
     e.preventDefault()
+
+    const result = calculateAll(
+      this.props.params,
+      this.state.distance,
+      this.state.height,
+      this.state.wind,
+      this.state.angle
+    )
+
     this.setState({
-      result: calculateAll(
-        this.props.params,
-        this.state.distance,
-        this.state.height,
-        this.state.wind,
-        this.state.angle
-      )
+      result,
+      recordCaliperDistance: result.caliperDist,
+      recordHorizontalDistance: result.hDistScaled,
+      recordType: 'beam',
+      saving: 0
     })
 
     // Remove on screen keyboard
@@ -50,6 +69,42 @@ class CalculateScreen extends Component {
     // (reset is done by normal event)
     this.distanceInput.focus()
     this.setState({ result: null })
+  }
+
+  onRecord = e => {
+    e.preventDefault()
+
+    const recordKey = database
+      .ref('/records/' + auth.currentUser.uid + '/default')
+      .push().key
+
+    const record = {
+      distance: parseFloat(this.state.distance),
+      height: parseFloat(this.state.height),
+      wind: parseFloat(this.state.wind),
+      angle: parseFloat(this.state.angle),
+      actualCaliperDistance: parseFloat(this.state.recordCaliperDistance),
+      // Convert back to yards
+      actualHorizontalDistance:
+        parseFloat(this.state.recordHorizontalDistance) /
+        this.props.params.yardToCm,
+      type: this.state.recordType,
+      timestamp: firebase.database.ServerValue.TIMESTAMP
+    }
+
+    this.setState({ saving: 1 })
+
+    database
+      .ref('/records/' + auth.currentUser.uid + '/default/' + recordKey)
+      .set(record)
+      .then(result => {
+        console.log('Save succeed')
+        this.setState({ saving: 2 })
+      })
+      .catch(error => {
+        console.log('Save failed', error)
+        alert('Failed to save record')
+      })
   }
 
   render() {
@@ -73,6 +128,53 @@ class CalculateScreen extends Component {
             {this.state.result.hDist} y
           </List.Item>
         </List>
+        <h5>Record Success</h5>
+        <Form onSubmit={this.onRecord}>
+          <Form.Group widths="equal">
+            <Form.Field>
+              <label>Actual Caliper Distance</label>
+              <input
+                required
+                step="0.1"
+                tabIndex="11"
+                type="number"
+                min="0"
+                max="400"
+                {...this.model('recordCaliperDistance')}
+              />
+            </Form.Field>
+            <Form.Field>
+              <label>Actual Horizontal Distance (cm)</label>
+              <input
+                required
+                step="0.01"
+                tabIndex="12"
+                type="number"
+                min="0"
+                max="400"
+                {...this.model('recordHorizontalDistance')}
+              />
+            </Form.Field>
+          </Form.Group>
+          <Form.Group inline>
+            <label>Type</label>
+            <Form.Radio
+              label="Beam"
+              value="beam"
+              {...this.model('recordType', 'beam')}
+            />
+            <Form.Radio
+              label="Backspin"
+              value="backspin"
+              {...this.model('recordType', 'backspin')}
+            />
+          </Form.Group>
+          <Button type="submit" positive disabled={this.state.saving > 0}>
+            {this.state.saving === 0
+              ? 'Save'
+              : this.state.saving === 1 ? 'Saving' : 'Saved'}
+          </Button>
+        </Form>
       </Segment>
     ) : (
       ''
@@ -168,9 +270,8 @@ class CalculateScreen extends Component {
             </Button>
             <ConfigureScreen params={this.props.params} />
             <TableScreen params={this.props.params} />
-
-            {result}
           </Form>
+          {result}
         </Container>
         <Container>
           <p>

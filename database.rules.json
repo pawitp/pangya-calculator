@@ -7,10 +7,11 @@
       }
     },
     "records": {
-      "$record": {
-        ".write": "(!data.exists() || data.child('userId').val() == auth.uid) && newData.child('userId').val() == auth.uid",
-        ".read": "data.child('userId').val() == auth.uid",
-        ".indexOn": ["userId"]
+      "$uid": {
+        "default": {
+          ".write": "$uid == auth.uid",
+          ".read": "$uid == auth.uid"
+        }
       }
     }
   }
