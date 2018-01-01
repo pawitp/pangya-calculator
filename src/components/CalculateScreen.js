@@ -8,6 +8,7 @@ import {
   List
 } from 'semantic-ui-react'
 import ConfigureScreen from './ConfigureScreen'
+import TableScreen from './TableScreen'
 import calculateAll from '../lib/pangyaCalculator'
 import bindModel from '../lib/bindModel'
 
@@ -166,6 +167,7 @@ class CalculateScreen extends Component {
               Reset
             </Button>
             <ConfigureScreen params={this.props.params} />
+            <TableScreen params={this.props.params} />
 
             {result}
           </Form>

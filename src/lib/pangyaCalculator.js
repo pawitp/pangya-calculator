@@ -5,14 +5,14 @@ const VWI_NEG_MULTIPLIER = 1.25
 const VWI_POS_MULTIPLIER = 1.0
 
 const PARAMS = {
-  pin: { '80': 216, '90': 249.3, '100': 279.2 },
-  hwi: { '80': 0.5271, '90': 0.7302, '100': 0.9917 },
-  heightPos: { '80': 1.4798, '90': 1.1074, '100': 0.82 },
-  heightNeg: { '80': 1.5091, '90': 1.011, '100': 0.93 },
+  pin: { '80': 233.9, '90': 266.75, '100': 299.6 },
+  hwi: { '80': 0.5471, '90': 0.7702, '100': 1.0517 },
+  heightPos: { '80': 1.4798, '90': 1.0674, '100': 0.77 },
+  heightNeg: { '80': 1.2491, '90': 0.9011, '100': 0.65 },
   heightModPos: 0.0135,
   heightModNeg: 0.0094,
   yardToCm: 18.2 / 12,
-  totalDist: 275
+  totalDist: 294
 }
 
 function generateCaliperPercentages() {
@@ -97,9 +97,8 @@ function getHeightInfluenceAtDist(params, dist, height) {
 }
 
 // For checking table
-function printTable(params) {
-  var caliperPercentages = generateCaliperPercentages()
-  for (let percent of caliperPercentages) {
+export function generateTable(params) {
+  return generateCaliperPercentages().map(percent => {
     const caliperDist = getCaliperDist(params, percent)
     const pinDist = getValueAtPercent(percent, params.pin)
     const hwi = getSpecialValueAtDist(params, pinDist, params.hwi)
@@ -107,24 +106,17 @@ function printTable(params) {
     const hNeg = getSpecialValueAtDist(params, pinDist, params.heightNeg)
     const vwiPos = getVwi(hwi, VWI_NEG_MULTIPLIER)
     const vwiNeg = getVwi(hwi, VWI_POS_MULTIPLIER)
-    console.log(
-      percent.toFixed(2) +
-        ' ' +
-        caliperDist.toFixed(1) +
-        ' ' +
-        pinDist.toFixed(2) +
-        ' ' +
-        hwi.toFixed(3) +
-        ' ' +
-        hPos.toFixed(3) +
-        ' ' +
-        hNeg.toFixed(3) +
-        ' ' +
-        vwiNeg.toFixed(3) +
-        ' ' +
-        vwiPos.toFixed(3)
-    )
-  }
+    return {
+      percent: percent.toFixed(2),
+      caliperDist: caliperDist.toFixed(1),
+      pinDist: pinDist.toFixed(2),
+      hwi: hwi.toFixed(3),
+      hPos: hPos.toFixed(3),
+      hNeg: hNeg.toFixed(3),
+      vwiNeg: vwiNeg.toFixed(3),
+      vwiPos: vwiPos.toFixed(3)
+    }
+  })
 }
 
 function decToRad(angle) {
