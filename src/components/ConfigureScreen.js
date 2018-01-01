@@ -5,7 +5,8 @@ import bindModel from '../lib/bindModel'
 
 export default class ConfigureScreen extends Component {
   state = {
-    modalOpen: false
+    modalOpen: false,
+    saving: false
   }
 
   model = bindModel(this)
@@ -63,17 +64,20 @@ export default class ConfigureScreen extends Component {
       totalDist: parseFloat(this.state.totalDist)
     }
 
+    this.setState({ saving: true })
+
     database
       .ref('/users/' + auth.currentUser.uid + '/default')
       .update(newParams)
       .then(result => {
         console.log('Save succeed')
+        this.setState({ modalOpen: false, saving: false })
       })
       .catch(error => {
         console.log('Save failed', error)
         alert('Failed to save profile')
+        this.setState({ modalOpen: false, saving: false })
       })
-    this.setState({ modalOpen: false })
   }
 
   render() {
@@ -312,8 +316,12 @@ export default class ConfigureScreen extends Component {
           <Button negative onClick={this.handleDiscard} inverted>
             Discard
           </Button>
-          <Button positive onClick={this.handleSave} inverted>
-            Save
+          <Button
+            positive
+            onClick={this.handleSave}
+            disabled={this.state.saving}
+            inverted>
+            {this.state.saving ? 'Saving' : 'Save'}
           </Button>
         </Modal.Actions>
       </Modal>
