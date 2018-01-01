@@ -5,7 +5,8 @@ import {
   Form,
   Segment,
   Label,
-  List
+  List,
+  Responsive
 } from 'semantic-ui-react'
 import ConfigureScreen from './ConfigureScreen'
 import TableScreen from './TableScreen'
@@ -277,8 +278,10 @@ class CalculateScreen extends Component {
             <Button type="reset" onClick={this.onReset} negative>
               Reset
             </Button>
-            <ConfigureScreen params={this.props.params} />
-            <TableScreen params={this.props.params} />
+            <Responsive as="span" minWidth={Responsive.onlyTablet.minWidth}>
+              <ConfigureScreen params={this.props.params} />
+              <TableScreen params={this.props.params} />
+            </Responsive>
           </Form>
           {result}
         </Container>
