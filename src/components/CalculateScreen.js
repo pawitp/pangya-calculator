@@ -65,10 +65,19 @@ class CalculateScreen extends Component {
   }
 
   onReset = e => {
-    // Trigger on screen keyboard
-    // (reset is done by normal event)
-    this.distanceInput.focus()
-    this.setState({ result: null })
+    this.setState(
+      {
+        distance: '',
+        height: '',
+        wind: '',
+        angle: '',
+        result: null
+      },
+      () => {
+        // Trigger on screen keyboard
+        this.distanceInput.focus()
+      }
+    )
   }
 
   onRecord = e => {
