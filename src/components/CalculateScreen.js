@@ -9,30 +9,23 @@ import {
 } from 'semantic-ui-react'
 import ConfigureScreen from './ConfigureScreen'
 import calculateAll from '../lib/pangyaCalculator'
+import bindModel from '../lib/bindModel'
 
 class CalculateScreen extends Component {
   state = {
-    distance: null,
-    height: null,
-    wind: null,
-    angle: null,
+    distance: '',
+    height: '',
+    wind: '',
+    angle: '',
     result: null
   }
 
-  onDistanceChanged = e => {
-    this.setState({ distance: e.target.value, result: null })
-  }
+  model = bindModel(this)
 
-  onHeightChanged = e => {
-    this.setState({ height: e.target.value, result: null })
-  }
-
-  onWindChanged = e => {
-    this.setState({ wind: e.target.value, result: null })
-  }
-
-  onAngleChanged = e => {
-    this.setState({ angle: e.target.value, result: null })
+  handleChange = () => {
+    if (this.state.result != null) {
+      this.setState({ result: null })
+    }
   }
 
   onCalculate = e => {
@@ -120,7 +113,7 @@ class CalculateScreen extends Component {
                   type="number"
                   min="0"
                   max="400"
-                  onChange={this.onDistanceChanged}
+                  {...this.model('distance')}
                   ref={input => (this.distanceInput = input)}
                 />
               </Form.Field>
@@ -134,7 +127,7 @@ class CalculateScreen extends Component {
                   type="number"
                   min="-50"
                   max="50"
-                  onChange={this.onHeightChanged}
+                  {...this.model('height')}
                 />
               </Form.Field>
             </Form.Group>
@@ -149,7 +142,7 @@ class CalculateScreen extends Component {
                   type="number"
                   min="-9"
                   max="9"
-                  onChange={this.onWindChanged}
+                  {...this.model('wind')}
                 />
               </Form.Field>
               <Form.Field>
@@ -162,7 +155,7 @@ class CalculateScreen extends Component {
                   type="number"
                   min="0"
                   max="90"
-                  onChange={this.onAngleChanged}
+                  {...this.model('angle')}
                 />
               </Form.Field>
             </Form.Group>
