@@ -2,6 +2,7 @@ import React, { Component } from 'react'
 import { Form, Button, Modal, Table, Popup, Icon } from 'semantic-ui-react'
 import { database, auth } from '../lib/firebase'
 import bindModel from '../lib/bindModel'
+import calculateAll, { sumLoss } from '../lib/pangyaCalculator'
 
 export default class ConfigureScreen extends Component {
   state = {
@@ -49,10 +50,8 @@ export default class ConfigureScreen extends Component {
       })
   }
 
-  handleDiscard = () => this.setState({ modalOpen: false })
-
-  handleSave = () => {
-    const newParams = {
+  getParams = () => {
+    return {
       pin: {
         '80': parseFloat(this.state.pin_80),
         '90': parseFloat(this.state.pin_90),
@@ -78,12 +77,16 @@ export default class ConfigureScreen extends Component {
       yardToCm: parseFloat(this.state.yardToCm),
       totalDist: parseFloat(this.state.totalDist)
     }
+  }
 
+  handleDiscard = () => this.setState({ modalOpen: false })
+
+  handleSave = () => {
     this.setState({ saving: true })
 
     database
       .ref('/users/' + auth.currentUser.uid + '/default')
-      .update(newParams)
+      .update(this.getParams())
       .then(result => {
         console.log('Save succeed')
         this.setState({ modalOpen: false, saving: false })
@@ -96,20 +99,40 @@ export default class ConfigureScreen extends Component {
   }
 
   render() {
+    var losses = []
+    var lossesH = []
+    var lossesV = []
     const records = this.state.records.map(r => {
+      const { caliperDist, hDist } = calculateAll(
+        this.getParams(),
+        r.distance,
+        r.height,
+        r.wind,
+        r.angle
+      )
+      const lossCaliperDist = caliperDist - r.actualCaliperDistance
+      const lossHDist = hDist - r.actualHorizontalDistance
+      losses.push(Math.abs(lossCaliperDist) + Math.abs(lossHDist))
+      lossesH.push(Math.abs(lossHDist))
+      lossesV.push(Math.abs(lossCaliperDist))
+
       return (
         <Table.Row key={r.key}>
           <Table.Cell>{r.distance.toFixed(1)}</Table.Cell>
           <Table.Cell>{r.height.toFixed(2)}</Table.Cell>
           <Table.Cell>{r.wind}</Table.Cell>
           <Table.Cell>{r.angle}</Table.Cell>
+          <Table.Cell>{r.type}</Table.Cell>
           <Table.Cell>{r.actualCaliperDistance.toFixed(1)}</Table.Cell>
           <Table.Cell>{r.actualHorizontalDistance.toFixed(2)}</Table.Cell>
-          <Table.Cell>{r.type}</Table.Cell>
-          <Table.Cell>TODO</Table.Cell>
+          <Table.Cell>{lossCaliperDist.toFixed(3)}</Table.Cell>
+          <Table.Cell>{lossHDist.toFixed(3)}</Table.Cell>
         </Table.Row>
       )
     })
+    const avgLoss = sumLoss(losses)
+    const avgLossH = sumLoss(lossesH)
+    const avgLossV = sumLoss(lossesV)
 
     return (
       <Modal
@@ -342,6 +365,10 @@ export default class ConfigureScreen extends Component {
             </Table>
           </Form>
           <h3>Records</h3>
+          <p>
+            Average Loss: {avgLossV.toFixed(6)} {avgLossH.toFixed(6)}{' '}
+            {avgLoss.toFixed(6)}
+          </p>
           <Table celled striped>
             <Table.Header>
               <Table.Row>
@@ -349,10 +376,11 @@ export default class ConfigureScreen extends Component {
                 <Table.HeaderCell>Height</Table.HeaderCell>
                 <Table.HeaderCell>Wind</Table.HeaderCell>
                 <Table.HeaderCell>Angle</Table.HeaderCell>
+                <Table.HeaderCell>Type</Table.HeaderCell>
                 <Table.HeaderCell>Actual Caliper</Table.HeaderCell>
                 <Table.HeaderCell>Actual Horizontal</Table.HeaderCell>
-                <Table.HeaderCell>Type</Table.HeaderCell>
-                <Table.HeaderCell>Loss</Table.HeaderCell>
+                <Table.HeaderCell>Δ Caliper</Table.HeaderCell>
+                <Table.HeaderCell>Δ Horizontal</Table.HeaderCell>
               </Table.Row>
             </Table.Header>
             <Table.Body>{records}</Table.Body>

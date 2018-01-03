@@ -171,5 +171,13 @@ function calculateAll(params, dist, height, wind, angle) {
   }
 }
 
+export function sumLoss(data) {
+  var total = 0
+  for (let entry of data) {
+    total += Math.pow(entry, 2)
+  }
+  return Math.pow(total / data.length, 0.5)
+}
+
 export default calculateAll
 export const defaultParams = PARAMS
